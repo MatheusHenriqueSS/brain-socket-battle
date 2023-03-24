@@ -5,12 +5,17 @@ function GetUsername() {
 }
 
 export function Trivia() {
-    
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [username, setUsername] = useState("");
+
+    useEffect(() => {
+        setUsername(searchParams.get("playerName") || "");
+    }, []);
 
     return (
         <main>
+            <h1 className="heading">{`Welcome to the Programming Trivia Game, ${username}`}</h1>
             <section className="section game-info"></section>
-
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
                 <button className="btn trivia__question-btn">Get question</button>

@@ -1,6 +1,8 @@
 import express from "express";
 import * as http from "http";
 import { Server } from "socket.io";
+import formatMessage from "../utils/formatMessage";
+import PlayerManger from "../utils/players"
 
 const port = process.env.PORT || 3001;
 
@@ -20,6 +22,17 @@ io.on('connection', (socket) => {
         console.log(data);
 
         io.emit('foo', data);
+    })
+
+    socket.on('join', ({playerName, room}, callback) => {
+        const { error, newPlayer } = PlayerManger.addPlayers({ id: socket.id, playerName, room });
+
+        if(error) return callback(error.message);
+        callback();
+
+        socket.join(newPlayer.room);
+
+        socket.emit('message', formatMessage('Admin', 'Welcome!'));
     })
 
 })

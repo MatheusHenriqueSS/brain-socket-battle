@@ -42,6 +42,26 @@ io.on('connection', (socket) => {
         })
     })
 
+    socket.on('disconnect', () => {
+        console.log("A player has disconnected");
+
+        const disconnectedPlayer = PlayerManger.removePlayer(socket.id);
+
+        if(disconnectedPlayer) {
+            const { playerName, room } = disconnectedPlayer;
+            io.in(room).emit(
+                'message',
+                formatMessage('Admin', `${playerName} has left!`)
+            )
+
+            io.in(room).emit('room', 
+            {
+                room,
+                players: PlayerManger.getAllPlayers(room)
+            })
+        }
+    })
+
 })
 
 

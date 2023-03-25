@@ -3,10 +3,22 @@ import { useSearchParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { socket } from "../socket";
 
+interface IPlayer {
+    id: string,
+    playerName: string,
+    room: string
+}
+
+interface IGameInfo {
+    room: string,
+    players: IPlayer[];
+}
+
 export function Trivia() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [username, setUsername] = useState("");
     const [chatMessages, setChatMessages] = useState(new Array<{playerName: string, text: string, createdAt: string}>());
+    const [gameInfo, setGameInfo] = useState({} as IGameInfo);
     const roomRef = useRef("");
 
     const initializedRef = useRef(false);
@@ -30,6 +42,10 @@ export function Trivia() {
     socket.on('message', ({ playerName, text, createdAt}) => {
         setChatMessages([...chatMessages, {playerName, text, createdAt}]);
     })
+
+    socket.on('room', ({room, players}) => {
+        setGameInfo({room, players});
+    })
     
     useEffect(() => {
         initializeValues();
@@ -39,7 +55,22 @@ export function Trivia() {
     return (
         <main>
             <h1 className="heading">{`Welcome to the Programming Trivia Game, ${username}`}</h1>
-            <section className="section game-info"></section>
+            <section className="section game-info">
+                {Object.keys(gameInfo).length && 
+                <div>
+                    <h2 className="subheading"> game info </h2>
+                    <h3> Room: {gameInfo.room}</h3>
+                    <h3> Players: </h3>
+                    <ul>
+                        {gameInfo.players.map((player) => {
+                            return (
+                                <li>{player.playerName}</li>
+                            )
+                        })}
+                    </ul>
+                </div>
+                }
+            </section>
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
                 <button className="btn trivia__question-btn">Get question</button>

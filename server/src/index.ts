@@ -92,6 +92,27 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on("sendAnswer", (answer, callback) => {
+        const { error, player } = PlayerManger.getPlayer(socket.id);
+
+        if (error) return callback(error.message);
+
+        if (player) {
+            const { isRoundOver } = Game.setGameStatus({
+                event: "sendAnswer",
+                playerId: player.id,
+                room: player.room
+            })
+
+            io.to(player.room).emit("answer", {
+                ...formatMessage(player.playerName, answer),
+                isRoundOver
+            })
+
+            callback();
+        }
+    })
+
 })
 
 

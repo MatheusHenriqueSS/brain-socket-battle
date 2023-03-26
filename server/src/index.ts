@@ -113,6 +113,21 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on("getAnswer", (data, callback) => {
+        const {error, player} = PlayerManger.getPlayer(socket.id);
+
+        if (error) return callback(error.message); 
+
+        if (player) {
+            const { correctAnswer } = Game.getGameStatus({ event: "getAnswer" })!;
+
+            io.to(player.room).emit(
+                "correctAnswer",
+                formatMessage(player.playerName, correctAnswer)
+            )
+        }
+    })
+
 })
 
 

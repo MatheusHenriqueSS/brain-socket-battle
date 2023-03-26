@@ -34,6 +34,13 @@ export function Trivia() {
     const [submittedAnswer, setSubmittedAnswer] = useState(false);
     const [triviaAnswers, setTriviaAnswers] = useState(new Array<{playerName: string, text: string, createdAt: string}>())
     const [isRoundOver, setIsRoundOver] = useState(false);
+    const [correctAnswer, setCorrectAnswer] = useState("");
+
+    const getAnswer = () => {
+        socket.emit('getAnswer', null ,(err: any) => {
+            if (err) return alert(err);
+        })
+    }
 
     const getQuestion = () => {
         socket.emit("getQuestion", null, (error: any) => {
@@ -108,6 +115,7 @@ export function Trivia() {
         });
         setSubmittedAnswer(false);
         setIsRoundOver(false);
+        setCorrectAnswer("");
     })
     
     useEffect(() => {
@@ -117,6 +125,10 @@ export function Trivia() {
     socket.on("answer", ({text, createdAt, playerName, isRoundOver}) => {
         setTriviaAnswers([...triviaAnswers, {playerName, text, createdAt}]);
         setIsRoundOver(true);
+    })
+
+    socket.on("correctAnswer", ({text}) => {
+        setCorrectAnswer(text);
     })
 
 
@@ -142,7 +154,7 @@ export function Trivia() {
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
                 <button className="btn trivia__question-btn"  disabled={questionDisplayed} onClick={() => getQuestion()}>Get question</button>
-                <button className="btn trivia__answer-btn" disabled={!isRoundOver}>
+                <button className="btn trivia__answer-btn" onClick={() => getAnswer()} disabled={!isRoundOver}>
                     Reveal Answer
                 </button>
                 <div className="trivia__question">
@@ -165,6 +177,10 @@ export function Trivia() {
 
                 </div>
                 <div className="trivia__answers">
+                {
+                    !!correctAnswer && 
+                    (<p className="trivia__correct-answer"> {`The correct answer is: ${correctAnswer}`}</p>)
+                    }
                 {
                         triviaAnswers.map((message) => {
                             return (    

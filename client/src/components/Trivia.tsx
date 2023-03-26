@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { io } from "socket.io-client";
 import { socket } from "../socket";
 
 interface IPlayer {
@@ -19,7 +18,26 @@ export function Trivia() {
     const [username, setUsername] = useState("");
     const [chatMessages, setChatMessages] = useState(new Array<{playerName: string, text: string, createdAt: string}>());
     const [gameInfo, setGameInfo] = useState({} as IGameInfo);
+    const [isSending, setIsSending] = useState(false);
     const roomRef = useRef("");
+    const chatFormInputRef = useRef<HTMLInputElement>(null);
+
+    const handleChatSubmit = (e: any) => {
+        e.preventDefault();
+
+        setIsSending(true);
+
+        const message = e.target.elements.message.value;
+
+        socket.emit("sendMessage", message, (error: any) => {
+            setIsSending(false);
+            chatFormInputRef.current!.focus();
+            chatFormInputRef.current!.value = "";
+
+            if(error) return alert(error);
+        })
+
+    }
 
     const initializedRef = useRef(false);
 
@@ -64,7 +82,7 @@ export function Trivia() {
                     <ul>
                         {gameInfo.players.map((player) => {
                             return (
-                                <li>{player.playerName}</li>
+                                <li key={player.playerName}>{player.playerName}</li>
                             )
                         })}
                     </ul>
@@ -102,7 +120,7 @@ export function Trivia() {
                     {
                         chatMessages.map((message) => {
                             return (    
-                                <div className="message">
+                                <div key={message.createdAt} className="message">
                                     <p>
                                         <span className="message__playername"> {message.playerName} </span>
                                         <span className="message__meta"> {new Date(message.createdAt).toLocaleTimeString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true })} </span>
@@ -115,15 +133,16 @@ export function Trivia() {
                         })
                     }
                 </div>
-                <form className="chat__form">
+                <form className="chat__form" onSubmit={(e: any) => handleChatSubmit(e)}>
                 <input
                     className="form__input chat__message"
                     name="message"
                     placeholder="Your Message"
                     required
                     autoComplete="off"
+                    ref={chatFormInputRef}
                 />
-                <input className="btn chat__submit-btn" type="submit" value="send" />
+                <input className="btn chat__submit-btn" type="submit" value="send" disabled={isSending}/>
                 </form>
         </section>
         </main>

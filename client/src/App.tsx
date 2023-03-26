@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { socket } from "./socket";
-import { MyForm } from './components/Myform';
-import { ConnectionState } from './components/ConnectionState';
-import { Events } from './components/Events';
-import { ConnectionManager } from './components/ConnectionManager';
 import { Index } from './components/Index';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Trivia } from './components/Trivia';

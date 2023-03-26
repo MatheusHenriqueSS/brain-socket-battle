@@ -3,6 +3,7 @@ import * as http from "http";
 import { Server } from "socket.io";
 import formatMessage from "../utils/formatMessage";
 import PlayerManger from "../utils/players"
+import Game from "../utils/game";
 
 const port = process.env.PORT || 3001;
 
@@ -75,6 +76,21 @@ io.on('connection', (socket) => {
         }
         callback();
     });
+
+    socket.on("getQuestion", async (data, callback) => {
+        const { error, player } = PlayerManger.getPlayer(socket.id);
+
+        if (error) return callback(error.message);
+
+        if (player) {
+            const game = await Game.setGame();
+            io.to(player.room).emit("question",
+            {
+                playerName: player.playerName,
+                ...game!.prompt  
+            })
+        }
+    })
 
 })
 

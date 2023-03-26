@@ -28,8 +28,12 @@ export function Trivia() {
     const [isSending, setIsSending] = useState(false);
     const roomRef = useRef("");
     const chatFormInputRef = useRef<HTMLInputElement>(null);
+    const answerFormInputRef = useRef<HTMLInputElement>(null);
     const [questionDisplayed, setQuestionDisplayed] = useState(false);
     const [triviaQuestion, setTriviaQuestion] = useState({} as TriviaQuestion);
+    const [submittedAnswer, setSubmittedAnswer] = useState(false);
+    const [triviaAnswers, setTriviaAnswers] = useState(new Array<{playerName: string, text: string, createdAt: string}>())
+    const [isRoundOver, setIsRoundOver] = useState(false);
 
     const getQuestion = () => {
         socket.emit("getQuestion", null, (error: any) => {
@@ -37,6 +41,21 @@ export function Trivia() {
         })
     }
 
+    const submitAnswer = (e: any) => {
+        e.preventDefault();
+
+        setSubmittedAnswer(true);
+
+        const answer = e.target.elements.answer.value;
+
+        socket.emit("sendAnswer", answer, (error: any) => {
+
+            answerFormInputRef.current?.focus();
+            answerFormInputRef.current!.value = ""
+
+            if(error) alert(error.message);
+        })
+    }
     const handleChatSubmit = (e: any) => {
         e.preventDefault();
 
@@ -87,11 +106,18 @@ export function Trivia() {
             answers,
             createdAt
         });
+        setSubmittedAnswer(false);
+        setIsRoundOver(false);
     })
     
     useEffect(() => {
         initializeValues();
     }, [initializeValues]);
+
+    socket.on("answer", ({text, createdAt, playerName, isRoundOver}) => {
+        setTriviaAnswers([...triviaAnswers, {playerName, text, createdAt}]);
+        setIsRoundOver(true);
+    })
 
 
     return (
@@ -116,7 +142,7 @@ export function Trivia() {
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
                 <button className="btn trivia__question-btn"  disabled={questionDisplayed} onClick={() => getQuestion()}>Get question</button>
-                <button className="btn trivia__answer-btn" disabled>
+                <button className="btn trivia__answer-btn" disabled={!isRoundOver}>
                     Reveal Answer
                 </button>
                 <div className="trivia__question">
@@ -138,9 +164,26 @@ export function Trivia() {
                     }
 
                 </div>
-                <div className="trivia__answers"></div>
-                <form className="trivia__form">
+                <div className="trivia__answers">
+                {
+                        triviaAnswers.map((message) => {
+                            return (    
+                                <div key={message.createdAt} className="message">
+                                    <p>
+                                        <span className="message__playername"> {message.playerName} </span>
+                                        <span className="message__meta"> {new Date(message.createdAt).toLocaleTimeString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true })} </span>
+                                    </p>
+                                    <p>
+                                        {message.text}
+                                    </p>
+                                </div>
+                            )
+                        })
+                    }
+                </div>
+                <form className="trivia__form" onSubmit={(e: any) => submitAnswer(e)}>
                     <input
+                        ref={answerFormInputRef}
                         className="form__input trivia__answer"
                         name="answer"
                         placeholder="Your Answer"
@@ -151,7 +194,8 @@ export function Trivia() {
                         className="btn trivia__submit-btn"
                         type="submit"
                         value="send"submit-btn
-                        disabled={!questionDisplayed}
+                        disabled={!questionDisplayed && submittedAnswer}
+                        
                     />
                 </form>
             </section>

@@ -62,6 +62,20 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on("sendMessage", (message, callback) => {
+        const {error, player} = PlayerManger.getPlayer(socket.id);
+
+        if (error) return callback(error.message);
+
+        if (player) {
+            io.to(player.room).emit(
+                "message",
+                formatMessage(player.playerName, message)
+            )
+        }
+        callback();
+    });
+
 })
 
 

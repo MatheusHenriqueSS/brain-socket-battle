@@ -13,6 +13,13 @@ interface IGameInfo {
     players: IPlayer[];
 }
 
+interface TriviaQuestion {
+    playerName: string,
+    prompt: string,
+    answers: string[],
+    createdAt: number
+}
+
 export function Trivia() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [username, setUsername] = useState("");
@@ -21,6 +28,14 @@ export function Trivia() {
     const [isSending, setIsSending] = useState(false);
     const roomRef = useRef("");
     const chatFormInputRef = useRef<HTMLInputElement>(null);
+    const [questionDisplayed, setQuestionDisplayed] = useState(false);
+    const [triviaQuestion, setTriviaQuestion] = useState({} as TriviaQuestion);
+
+    const getQuestion = () => {
+        socket.emit("getQuestion", null, (error: any) => {
+            if (error) return alert(error);
+        })
+    }
 
     const handleChatSubmit = (e: any) => {
         e.preventDefault();
@@ -64,6 +79,15 @@ export function Trivia() {
     socket.on('room', ({room, players}) => {
         setGameInfo({room, players});
     })
+
+    socket.on('question', ({answers, createdAt, playerName, question}) => {
+        setTriviaQuestion({
+            playerName,
+            prompt: question,
+            answers,
+            createdAt
+        });
+    })
     
     useEffect(() => {
         initializeValues();
@@ -91,11 +115,29 @@ export function Trivia() {
             </section>
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
-                <button className="btn trivia__question-btn">Get question</button>
+                <button className="btn trivia__question-btn"  disabled={questionDisplayed} onClick={() => getQuestion()}>Get question</button>
                 <button className="btn trivia__answer-btn" disabled>
                     Reveal Answer
                 </button>
-                <div className="trivia__question"></div>
+                <div className="trivia__question">
+                    { Object.keys(triviaQuestion).length && 
+                    <div>
+                        <p>
+                            <span className="trivia__question-playername">{triviaQuestion.playerName} picked a question!</span>
+                            <span className="trivia__question-meta">{new Date(triviaQuestion.createdAt).toLocaleTimeString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true })}</span>
+                        </p>
+                        <p>
+                            {triviaQuestion.prompt}
+                        </p>
+                        <ul>
+                        {triviaQuestion.answers.map((answer) => (
+                            <li>{answer}</li>
+                        ))}
+                        </ul>
+                    </div>
+                    }
+
+                </div>
                 <div className="trivia__answers"></div>
                 <form className="trivia__form">
                     <input
@@ -108,8 +150,8 @@ export function Trivia() {
                     <input
                         className="btn trivia__submit-btn"
                         type="submit"
-                        value="send"
-                        disabled
+                        value="send"submit-btn
+                        disabled={!questionDisplayed}
                     />
                 </form>
             </section>

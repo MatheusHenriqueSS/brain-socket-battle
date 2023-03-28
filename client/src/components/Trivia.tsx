@@ -5,14 +5,15 @@ import { socket } from "../socket";
 interface IPlayer {
     id: string,
     playerName: string,
-    room: string
+    room: string,
+    score: number
 }
+
 
 interface IGameInfo {
     room: string,
-    players: IPlayer[];
+    players: [string, number][]
 }
-
 interface TriviaQuestion {
     playerName: string,
     prompt: string,
@@ -28,19 +29,10 @@ export function Trivia() {
     const [isSending, setIsSending] = useState(false);
     const roomRef = useRef("");
     const chatFormInputRef = useRef<HTMLInputElement>(null);
-    const answerFormInputRef = useRef<HTMLInputElement>(null);
-    const [questionDisplayed, setQuestionDisplayed] = useState(false);
     const [triviaQuestion, setTriviaQuestion] = useState({} as TriviaQuestion);
     const [submittedAnswer, setSubmittedAnswer] = useState(false);
     const [triviaAnswers, setTriviaAnswers] = useState(new Array<{playerName: string, text: string, createdAt: string}>())
-    const [isRoundOver, setIsRoundOver] = useState(false);
     const [correctAnswer, setCorrectAnswer] = useState("");
-
-    const getAnswer = () => {
-        socket.emit('getAnswer', null ,(err: any) => {
-            if (err) return alert(err);
-        })
-    }
 
     const getQuestion = () => {
         socket.emit("getQuestion", null, (error: any) => {
@@ -48,17 +40,12 @@ export function Trivia() {
         })
     }
 
-    const submitAnswer = (e: any) => {
-        e.preventDefault();
+    const submitAnswer = (answer: string) => {
+        if(submittedAnswer) return;
 
         setSubmittedAnswer(true);
 
-        const answer = e.target.elements.answer.value;
-
-        socket.emit("sendAnswer", answer, (error: any) => {
-
-            answerFormInputRef.current?.focus();
-            answerFormInputRef.current!.value = ""
+        socket.emit("sendAnswer", {answer, playerName: username}, (error: any) => {
 
             if(error) alert(error.message);
         })
@@ -114,7 +101,6 @@ export function Trivia() {
             createdAt
         });
         setSubmittedAnswer(false);
-        setIsRoundOver(false);
         setCorrectAnswer("");
     })
     
@@ -122,9 +108,8 @@ export function Trivia() {
         initializeValues();
     }, [initializeValues]);
 
-    socket.on("answer", ({text, createdAt, playerName, isRoundOver}) => {
+    socket.on("answer", ({ text, createdAt, playerName }) => {
         setTriviaAnswers([...triviaAnswers, {playerName, text, createdAt}]);
-        setIsRoundOver(true);
     })
 
     socket.on("correctAnswer", ({text}) => {
@@ -142,9 +127,10 @@ export function Trivia() {
                     <h3> Room: {gameInfo.room}</h3>
                     <h3> Players: </h3>
                     <ul>
-                        {gameInfo.players.map((player) => {
+                        {
+                        gameInfo.players.map((player) => {
                             return (
-                                <li key={player.playerName}>{player.playerName}</li>
+                                <li key={player[0]}>{player[0]} - {player[1]}</li>
                             )
                         })}
                     </ul>
@@ -153,10 +139,7 @@ export function Trivia() {
             </section>
             <section className="section trivia">
                 <h2 className="subheading">trivia</h2>
-                <button className="btn trivia__question-btn"  disabled={questionDisplayed} onClick={() => getQuestion()}>Get question</button>
-                <button className="btn trivia__answer-btn" onClick={() => getAnswer()} disabled={!isRoundOver}>
-                    Reveal Answer
-                </button>
+                <button className="btn trivia__question-btn" onClick={() => getQuestion()}>Get question</button>
                 <div className="trivia__question">
                     { Object.keys(triviaQuestion).length && 
                     <div>
@@ -167,9 +150,11 @@ export function Trivia() {
                         <p>
                             {triviaQuestion.prompt}
                         </p>
-                        <ul>
+                        <ul className="button-list">
                         {triviaQuestion.answers.map((answer) => (
-                            <li>{answer}</li>
+                            <li>
+                                <button onClick={() => submitAnswer(answer)}>{answer}</button>
+                            </li>
                         ))}
                         </ul>
                     </div>
@@ -177,43 +162,11 @@ export function Trivia() {
 
                 </div>
                 <div className="trivia__answers">
-                {
-                    !!correctAnswer && 
-                    (<p className="trivia__correct-answer"> {`The correct answer is: ${correctAnswer}`}</p>)
-                    }
-                {
-                        triviaAnswers.map((message) => {
-                            return (    
-                                <div key={message.createdAt} className="message">
-                                    <p>
-                                        <span className="message__playername"> {message.playerName} </span>
-                                        <span className="message__meta"> {new Date(message.createdAt).toLocaleTimeString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true })} </span>
-                                    </p>
-                                    <p>
-                                        {message.text}
-                                    </p>
-                                </div>
-                            )
-                        })
+                    {
+                        !!correctAnswer && 
+                        (<p className="trivia__correct-answer"> {`The correct answer is: ${correctAnswer}`}</p>)
                     }
                 </div>
-                <form className="trivia__form" onSubmit={(e: any) => submitAnswer(e)}>
-                    <input
-                        ref={answerFormInputRef}
-                        className="form__input trivia__answer"
-                        name="answer"
-                        placeholder="Your Answer"
-                        autoComplete="off"
-                        required
-                    />
-                    <input
-                        className="btn trivia__submit-btn"
-                        type="submit"
-                        value="send"submit-btn
-                        disabled={!questionDisplayed && submittedAnswer}
-                        
-                    />
-                </form>
             </section>
 
             <section className="section chat">

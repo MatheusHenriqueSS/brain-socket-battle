@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on("sendAnswer", (answer, callback) => {
+    socket.on("sendAnswer", ({answer, playerName}, callback) => {
         const { error, player } = PlayerManger.getPlayer(socket.id);
 
         if (error) return callback(error.message);
@@ -96,31 +96,38 @@ io.on('connection', (socket) => {
             const { isRoundOver } = Game.setGameStatus({
                 event: "sendAnswer",
                 playerId: player.id,
-                room: player.room
+                room: player.room,
+                answer,
+                playerName
             })
 
-            io.to(player.room).emit("answer", {
-                ...formatMessage(player.playerName, answer),
-                isRoundOver
-            })
+
+            if(isRoundOver) {
+                const { correctAnswer, score } = Game.getGameStatus({ event: "getAnswer" })!;
+                io.to(player.room).emit(
+                    "correctAnswer",
+                    formatMessage(player.playerName, correctAnswer)
+                )
+
+                io.to(player.room).emit(
+                    "room",
+                    {
+                        room: player.room,
+                        players: Object.entries(score).sort((a, b) => {return b[1] - a[1]})
+                    }
+                )
+            }
+
+            // io.to(player.room).emit("answer", {
+            //     ...formatMessage(player.playerName, answer),
+            //     isRoundOver
+            // })
 
             callback();
         }
     })
 
     socket.on("getAnswer", (data, callback) => {
-        const {error, player} = PlayerManger.getPlayer(socket.id);
-
-        if (error) return callback(error.message); 
-
-        if (player) {
-            const { correctAnswer } = Game.getGameStatus({ event: "getAnswer" })!;
-
-            io.to(player.room).emit(
-                "correctAnswer",
-                formatMessage(player.playerName, correctAnswer)
-            )
-        }
     })
 
 })

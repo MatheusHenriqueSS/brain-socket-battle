@@ -1,5 +1,6 @@
 ## Brain Socket Battle
 This is a multiplayer programming trivia game where players can join a game room and compete with each other by answering programming-related questions.
+![image](https://user-images.githubusercontent.com/46387641/227793947-dba9b4c6-d42c-4a8e-ac50-67ce349ad197.png)
 
 ### Installation
 Clone the repository and install dependencies:

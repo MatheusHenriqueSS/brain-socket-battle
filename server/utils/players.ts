@@ -2,14 +2,14 @@
 interface IPlayer {
     id: string,
     playerName: string,
-    room: string
+    room: string,
+    score: number;
 }
 
 const players: IPlayer[] = [];
 
 
 const addPlayers = ({id, playerName, room}: IPlayer) => {
-    console.log(playerName, room);
     if(!playerName || !room) {
         return {
             error: new Error("Please enter a player name and room!")
@@ -29,7 +29,7 @@ const addPlayers = ({id, playerName, room}: IPlayer) => {
         }
     }
 
-    const newPlayer= {id, playerName, room };
+    const newPlayer= {id, playerName, room, score: 0};
     players.push(newPlayer);
 
     return { newPlayer };

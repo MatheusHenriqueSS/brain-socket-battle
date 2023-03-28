@@ -2,9 +2,13 @@ import PlayerManager from "./players";
 import axios from "axios";
 
 interface Status {
-    submissions: {
-        [playerId: string]: string;
+    score: {
+        [playerName: string]: number
     },
+    submissions: {
+        [playerId: string]: boolean
+    },
+    winners: string[],
     correctAnswer: string,
     isRoundOver: boolean
 }
@@ -24,27 +28,47 @@ const game: {
     },
     status: {
         submissions: {},
+        score: {},
+        winners: [],
         correctAnswer: "",
         isRoundOver: false
     }
 }
 
-const getGameStatus = ({event}: any) => {
-    const { correctAnswer, isRoundOver } = game.status;
-
-    if (event === "getAnswer" && isRoundOver) {
-        return { correctAnswer };
-    }
+interface IGameStatus {
+    event: string,
+    playerName?: string
 }
 
-const setGameStatus = ({ event, playerId, answer, room }: any) => {
+const getGameStatus = (obj : IGameStatus) => {
+    const { correctAnswer, isRoundOver, winners, score } = game.status;
+
+    if (obj.event === "getAnswer" && isRoundOver) {
+        winners.map((playerName, index) => {
+            score[playerName] += 10 - index;
+            
+        })
+
+    }
+
+    if (obj.event ==="newPlayer" && obj.playerName) {
+        score[obj.playerName] = 0;
+    }
+
+    return game.status;
+
+}
+
+const setGameStatus = ({ event, playerId, playerName, answer, room }: any) => {
     if ( event === "sendAnswer") {
-        const { submissions } = game.status;
+        const { winners, submissions, correctAnswer } = game.status;
 
         if (!submissions[`${playerId}`]) {
-            submissions[`${playerId}`] = answer;
+            submissions[`${playerId}`] = true;
+            if(answer === correctAnswer)winners.push(playerName);
         }
 
+        
         game.status.isRoundOver = Object.keys(submissions).length === PlayerManager.getAllPlayers(room).length; 
     }
 
@@ -58,6 +82,7 @@ const setGame = async () => {
         const { correct_answer, incorrect_answers, question } = response.data.results[0];
         
         game.status.submissions = {};
+        game.status.winners = [];
         game.status.correctAnswer = correct_answer;
         game.prompt = {
             answers: shuffle([correct_answer, ...incorrect_answers]),

@@ -18,19 +18,13 @@ function App() {
       setIsConnected(false);
     }
 
-    function onFooEvent(value: any) {
-      console.log("entrou aqui");
-      setFooEvents(previous => [...previous, value] as never[])
-    }
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('foo', onFooEvent);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
-      socket.off('foo', onFooEvent);
     };
 
   }, []);

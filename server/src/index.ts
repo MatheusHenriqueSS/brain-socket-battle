@@ -17,35 +17,30 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-    console.log("A new player just connected");
-
-    socket.on('foo', (data) => {
-        console.log(data);
-
-        io.emit('foo', data);
-    })
-
     socket.on('join', ({playerName, room}, callback) => {
-        const { error, newPlayer } = PlayerManger.addPlayers({ id: socket.id, playerName, room });
+        const { error, newPlayer } = PlayerManger.addPlayers({ id: socket.id, playerName, room, score: 0 });
 
         if(error) return callback(error.message);
         callback();
 
-        socket.join(newPlayer.room);
+        if(newPlayer) {
 
-        socket.emit('message', formatMessage('Admin', 'Welcome!'));
+            socket.join(newPlayer.room);
 
-        socket.broadcast.to(newPlayer.room).emit('message', formatMessage('Admin', `${newPlayer.playerName} has joined the game!`));
+            socket.emit('message', formatMessage('Admin', 'Welcome!'));
 
-        io.in(newPlayer.room).emit('room', {
-            room: newPlayer.room,
-            players: PlayerManger.getAllPlayers(newPlayer.room)
-        })
+            socket.broadcast.to(newPlayer.room).emit('message', formatMessage('Admin', `${newPlayer.playerName} has joined the game!`));
+
+            const { score } = Game.getGameStatus({event: "newPlayer", playerName: newPlayer.playerName});
+
+            io.in(newPlayer.room).emit('room', {
+                room: newPlayer.room,
+                players: Object.entries(score).sort((a, b) => {return b[1] - a[1]})
+            })
+        }
     })
 
     socket.on('disconnect', () => {
-        console.log("A player has disconnected");
-
         const disconnectedPlayer = PlayerManger.removePlayer(socket.id);
 
         if(disconnectedPlayer) {

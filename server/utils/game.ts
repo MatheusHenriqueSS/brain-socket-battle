@@ -1,5 +1,6 @@
 import PlayerManager from "./players";
 import axios from "axios";
+import {decode} from "html-entities";
 
 interface Status {
     score: {
@@ -85,8 +86,8 @@ const setGame = async () => {
         game.status.winners = [];
         game.status.correctAnswer = correct_answer;
         game.prompt = {
-            answers: shuffle([correct_answer, ...incorrect_answers]),
-            question,
+            answers: shuffle([correct_answer, ...incorrect_answers]).map((option) => decode(option)),
+            question: decode(question),
             createdAt: new Date().getTime(),
         };
 

@@ -26,7 +26,6 @@ main {
   border-radius: 0;
   border: 1px solid var(--black-chocolate);
   cursor: pointer;
-  font-family: 'Courier New', Courier, monospace;
   margin-bottom: 10px;
   padding: 10px;
 }
@@ -224,14 +223,36 @@ main {
 
 
 .button-list button {
-  background-color: olivedrab; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 20px;
+  width: 100%;
+  margin-bottom: 7px;
+  font-size: 12px;
+  padding: 10px;
   text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
   cursor: pointer;
+  outline: none;
+  color: #000;
+  box-shadow: 0 5px #999;
+  border-radius: 0;
+  font-family: 'Courier New', Courier, monospace;
+  border: 1px solid var(--black-chocolate);
+}
+
+.button-list button:hover {
+  background-color: olivedrab;
+  color: #fff;
+}
+
+
+.button-list button:active:enabled {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.button-list button:disabled {
+  background-color: var(--pale-spring-bud);
+  border: 1px solid var(--light-grey);
+  color: var(--light-grey);
+  cursor: initial;
+  font-weight: initial;
 }

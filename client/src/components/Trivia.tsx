@@ -30,7 +30,7 @@ export function Trivia() {
     const roomRef = useRef("");
     const chatFormInputRef = useRef<HTMLInputElement>(null);
     const [triviaQuestion, setTriviaQuestion] = useState({} as TriviaQuestion);
-    const [submittedAnswer, setSubmittedAnswer] = useState(false);
+    const [submittedAnswer, setSubmittedAnswer] = useState("");
     const [triviaAnswers, setTriviaAnswers] = useState(new Array<{playerName: string, text: string, createdAt: string}>())
     const [correctAnswer, setCorrectAnswer] = useState("");
 
@@ -41,9 +41,9 @@ export function Trivia() {
     }
 
     const submitAnswer = (answer: string) => {
-        if(submittedAnswer) return;
+        if(!!submittedAnswer) return;
 
-        setSubmittedAnswer(true);
+        setSubmittedAnswer(answer);
 
         socket.emit("sendAnswer", {answer, playerName: username}, (error: any) => {
 
@@ -100,7 +100,7 @@ export function Trivia() {
             answers,
             createdAt
         });
-        setSubmittedAnswer(false);
+        setSubmittedAnswer("");
         setCorrectAnswer("");
     })
     
@@ -153,7 +153,8 @@ export function Trivia() {
                         <ul className="button-list">
                         {triviaQuestion.answers.map((answer) => (
                             <li>
-                                <button onClick={() => submitAnswer(answer)}>{answer}</button>
+                                <button style={{backgroundColor: submittedAnswer === answer  ? "green": "",
+                                color: submittedAnswer === answer ? "white": ""}}disabled={!!submittedAnswer} onClick={() => submitAnswer(answer)}>{answer}</button>
                             </li>
                         ))}
                         </ul>
